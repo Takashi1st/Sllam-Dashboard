@@ -9,6 +9,10 @@
 !.yarn/plugins
 !.yarn/releases
 !.yarn/versions
+/.agents
+/.claude
+/.windsurf
+/skills
 
 # testing
 /coverage
