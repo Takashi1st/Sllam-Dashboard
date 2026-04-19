@@ -1,11 +1,11 @@
 import type { Metadata } from "next";
-import { Tajawal } from "next/font/google";
+import { Readex_Pro } from "next/font/google";
 import "./globals.css";
 
-const tajawal = Tajawal({
+const readexPro = Readex_Pro({
   subsets: ["arabic", "latin"],
-  variable: "--font-tajawal",
-  weight: ["200", "300", "400", "500", "700", "800", "900"],
+  variable: "--font-readex",
+  weight: ["200", "300", "400", "500", "600", "700"],
 });
 
 export const metadata: Metadata = {
@@ -22,9 +22,9 @@ export default function RootLayout({
     <html
       lang="ar"
       dir="rtl"
-      className={`${tajawal.variable} h-full antialiased`}
+      className={`${readexPro.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col font-tajawal bg-[#f8fafc]">
+      <body className="min-h-full flex flex-col font-readex bg-[#f8fafc]">
         {children}
       </body>
     </html>

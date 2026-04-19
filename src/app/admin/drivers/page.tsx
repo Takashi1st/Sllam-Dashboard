@@ -3,10 +3,10 @@ import DriversUI from './drivers-ui';
 
 export default async function DriversManagement() {
     const driversDb = await prisma.driver.findMany({
+        take: 50,
         include: {
             profile: true
         },
-        // Driver model doesn't have createdAt, but Profile does
         orderBy: {
             profile: {
                 createdAt: 'desc'

@@ -8,13 +8,14 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-tajawal: var(--font-tajawal);
+  --font-readex: var(--font-readex);
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: var(--font-tajawal), sans-serif !important;
+  font-family: var(--font-readex), sans-serif !important;
+  font-weight: 400;
 }
 
 /* Custom scrollbar for a more premium feel */

@@ -3,6 +3,7 @@ import OrdersUI from './orders-ui';
 
 export default async function OrdersManagement() {
     const ordersDb = await prisma.order.findMany({
+        take: 100, // Limit to recent 100 orders for performance
         include: {
             user: { select: { name: true } },
             driver: { include: { profile: { select: { name: true } } } },

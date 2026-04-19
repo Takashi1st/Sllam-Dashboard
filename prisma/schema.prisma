@@ -26,6 +26,8 @@ model Profile {
 
   @@map("profiles")
   @@schema("public")
+  @@index([role])
+  @@index([createdAt])
 }
 
 model Driver {
@@ -42,6 +44,7 @@ model Driver {
 
   @@map("drivers")
   @@schema("public")
+  @@index([currentStatus])
 }
 
 model LocationHierarchy {
@@ -59,6 +62,7 @@ model LocationHierarchy {
 
   @@map("locations_hierarchy")
   @@schema("public")
+  @@index([nameAr])
 }
 
 model Order {
@@ -85,6 +89,10 @@ model Order {
 
   @@map("orders")
   @@schema("public")
+  @@index([status])
+  @@index([createdAt])
+  @@index([userId])
+  @@index([driverId])
 }
 
 model OrderHistory {

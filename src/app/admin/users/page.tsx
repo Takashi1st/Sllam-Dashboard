@@ -3,6 +3,7 @@ import UsersUI from './users-ui';
 
 export default async function UsersManagement() {
     const profiles = await prisma.profile.findMany({
+        take: 100, // Speed up initial load
         orderBy: { createdAt: 'desc' }
     });
 

@@ -30,19 +30,45 @@ const statusLabels: any = {
     rejected: 'محظور',
 };
 
+import { updateUserStatus, resetUserPassword } from '@/app/actions/admin-actions';
+
 export default function UsersUI({ initialUsers }: UsersUIProps) {
     const [searchTerm, setSearchTerm] = useState('');
     const [filterRole, setFilterRole] = useState('all');
+    const [loadingId, setLoadingId] = useState<string | null>(null);
     const router = useRouter();
 
     const filteredUsers = initialUsers.filter(user => {
-        const matchesSearch = user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            user.phone.includes(searchTerm);
+        const matchesSearch = user.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            user.phone?.includes(searchTerm);
         const matchesRole = filterRole === 'all' ||
             (filterRole === 'driver' && user.role === 'سائق') ||
             (filterRole === 'user' && user.role === 'عميل');
         return matchesSearch && matchesRole;
     });
+
+    const handleStatusUpdate = async (userId: string, newStatus: string) => {
+        setLoadingId(`${userId}-status`);
+        const result = await updateUserStatus(userId, newStatus);
+        setLoadingId(null);
+        if (result.success) {
+            router.refresh();
+        } else {
+            alert('تعذر تحديث الحالة: ' + result.error);
+        }
+    };
+
+    const handleResetPassword = async (userId: string) => {
+        if (!confirm('هل أنت متأكد من تصفير كلمة السر لهذا المستخدم؟')) return;
+        setLoadingId(`${userId}-reset`);
+        const result = await resetUserPassword(userId);
+        setLoadingId(null);
+        if (result.success) {
+            alert('تم تعيين المستخدم لتغيير كلمة السر عند الدخول القادم');
+        } else {
+            alert('تعذر تصفير كلمة السر: ' + result.error);
+        }
+    };
 
     return (
         <div className="space-y-8">
@@ -55,7 +81,7 @@ export default function UsersUI({ initialUsers }: UsersUIProps) {
                     onClick={() => router.refresh()}
                     className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors shadow-sm self-start"
                 >
-                    <RefreshCw size={18} />
+                    <RefreshCw size={18} className={loadingId === 'global' ? 'animate-spin' : ''} />
                     <span>تحديث البيانات</span>
                 </button>
             </div>
@@ -115,9 +141,9 @@ export default function UsersUI({ initialUsers }: UsersUIProps) {
                                         <td className="px-6 py-4">
                                             <div className="flex items-center gap-3">
                                                 <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold">
-                                                    {user.name && user.name[0]}
+                                                    {(user.name && user.name[0]) || 'U'}
                                                 </div>
-                                                <span className="font-medium text-gray-700">{user.name}</span>
+                                                <span className="font-medium text-gray-700">{user.name || 'مستخدم بدون اسم'}</span>
                                             </div>
                                         </td>
                                         <td className="px-6 py-4 text-gray-600 font-mono text-sm" dir="ltr">
@@ -136,15 +162,30 @@ export default function UsersUI({ initialUsers }: UsersUIProps) {
                                         <td className="px-6 py-4 text-left">
                                             <div className="flex items-center justify-end gap-2">
                                                 {user.status === 'pending' && (
-                                                    <button className="p-2 text-green-600 hover:bg-green-50 rounded-lg transition-colors" title='تفعيل'>
-                                                        <CheckCircle2 size={18} />
+                                                    <button
+                                                        onClick={() => handleStatusUpdate(user.id, 'approved')}
+                                                        disabled={loadingId === `${user.id}-status`}
+                                                        className="p-2 text-green-600 hover:bg-green-50 rounded-lg transition-colors disabled:opacity-50"
+                                                        title='تفعيل'
+                                                    >
+                                                        {loadingId === `${user.id}-status` ? <RefreshCw size={18} className="animate-spin" /> : <CheckCircle2 size={18} />}
                                                     </button>
                                                 )}
-                                                <button className={`p-2 ${user.status === 'rejected' ? 'text-green-600 hover:bg-green-50' : 'text-red-600 hover:bg-red-50'} rounded-lg transition-colors`} title='حظر/فك حظر'>
-                                                    <Ban size={18} />
+                                                <button
+                                                    onClick={() => handleStatusUpdate(user.id, user.status === 'rejected' ? 'approved' : 'rejected')}
+                                                    disabled={loadingId === `${user.id}-status`}
+                                                    className={`p-2 ${user.status === 'rejected' ? 'text-green-600 hover:bg-green-50' : 'text-red-600 hover:bg-red-50'} rounded-lg transition-colors disabled:opacity-50`}
+                                                    title={user.status === 'rejected' ? 'فك حظر' : 'حظر'}
+                                                >
+                                                    {loadingId === `${user.id}-status` ? <RefreshCw size={18} className="animate-spin" /> : <Ban size={18} />}
                                                 </button>
-                                                <button className="p-2 text-orange-600 hover:bg-orange-50 rounded-lg transition-colors" title='تصفير كلمة السر'>
-                                                    <KeyRound size={18} />
+                                                <button
+                                                    onClick={() => handleResetPassword(user.id)}
+                                                    disabled={loadingId === `${user.id}-reset`}
+                                                    className="p-2 text-orange-600 hover:bg-orange-50 rounded-lg transition-colors disabled:opacity-50"
+                                                    title='تصفير كلمة السر'
+                                                >
+                                                    {loadingId === `${user.id}-reset` ? <RefreshCw size={18} className="animate-spin" /> : <KeyRound size={18} />}
                                                 </button>
                                                 <button className="p-2 text-gray-400 hover:bg-gray-50 rounded-lg transition-colors">
                                                     <MoreVertical size={18} />
@@ -167,3 +208,4 @@ export default function UsersUI({ initialUsers }: UsersUIProps) {
         </div>
     );
 }
+
