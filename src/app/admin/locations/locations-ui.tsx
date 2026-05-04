@@ -8,20 +8,30 @@ import {
     Plus,
     Edit2,
     Trash2,
-    Layers
+    Layers,
+    Loader2
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
+import { addLocation, updateLocation, deleteLocation } from '@/app/actions/admin-actions';
+import { Modal } from '@/components/ui/modal';
 
 interface LocationsUIProps {
     initialLocations: any[];
 }
 
-import { addLocation, updateLocation, deleteLocation } from '@/app/actions/admin-actions';
-
 export default function LocationsUI({ initialLocations }: LocationsUIProps) {
     const [selectedGov, setSelectedGov] = useState<string | null>(null);
     const [selectedCity, setSelectedCity] = useState<string | null>(null);
     const [loading, setLoading] = useState(false);
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [modalData, setModalData] = useState<{
+        id?: string;
+        nameAr: string;
+        type: string;
+        parentId?: string;
+        mode: 'add' | 'edit';
+    }>({ nameAr: '', type: '', mode: 'add' });
+
     const router = useRouter();
 
     const governorates = useMemo(() =>
@@ -39,33 +49,37 @@ export default function LocationsUI({ initialLocations }: LocationsUIProps) {
         [initialLocations, selectedCity]
     );
 
-    const handleAdd = async (type: string, parentId?: string) => {
-        const nameAr = prompt('أدخل اسم الموقع بالعربية:');
-        if (!nameAr) return;
-
-        setLoading(true);
-        const res = await addLocation({ nameAr, type, parentId });
-        setLoading(false);
-
-        if (res.success) {
-            router.refresh();
-        } else {
-            alert('فشل الإضافة: ' + res.error);
-        }
+    const openAddModal = (type: string, parentId?: string) => {
+        setModalData({ nameAr: '', type, parentId, mode: 'add' });
+        setIsModalOpen(true);
     };
 
-    const handleEdit = async (id: string, currentName: string) => {
-        const nameAr = prompt('تعديل الاسم بالعربية:', currentName);
-        if (!nameAr || nameAr === currentName) return;
+    const openEditModal = (loc: any) => {
+        setModalData({ id: loc.id, nameAr: loc.nameAr, type: loc.type, mode: 'edit' });
+        setIsModalOpen(true);
+    };
+
+    const handleSubmit = async () => {
+        if (!modalData.nameAr.trim()) return;
 
         setLoading(true);
-        const res = await updateLocation(id, { nameAr });
+        let res;
+        if (modalData.mode === 'add') {
+            res = await addLocation({
+                nameAr: modalData.nameAr,
+                type: modalData.type,
+                parentId: modalData.parentId
+            });
+        } else {
+            res = await updateLocation(modalData.id!, { nameAr: modalData.nameAr });
+        }
         setLoading(false);
 
         if (res.success) {
+            setIsModalOpen(false);
             router.refresh();
         } else {
-            alert('فشل التعديل: ' + res.error);
+            alert('فشل العملية: ' + res.error);
         }
     };
 
@@ -86,7 +100,8 @@ export default function LocationsUI({ initialLocations }: LocationsUIProps) {
     };
 
     return (
-        <div className={`space-y-8 ${loading ? 'opacity-50 pointer-events-none' : ''}`}>
+        <div className="space-y-8">
+            {/* Header */}
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div className="text-right">
                     <h1 className="text-2xl font-bold text-gray-800 font-arabic">إدارة المواقع الجغرافية</h1>
@@ -95,20 +110,21 @@ export default function LocationsUI({ initialLocations }: LocationsUIProps) {
                 <div className="flex gap-3 self-start">
                     <button
                         onClick={() => router.refresh()}
-                        className="p-2 bg-gray-100 text-gray-600 rounded-xl hover:bg-gray-200 transition-colors"
+                        className="p-2.5 bg-white border border-gray-100 text-gray-600 rounded-xl hover:bg-gray-50 transition-all shadow-sm"
                     >
                         <RefreshCw size={20} className={loading ? 'animate-spin' : ''} />
                     </button>
                     <button
-                        onClick={() => handleAdd('governorate')}
-                        className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors shadow-sm font-arabic"
+                        onClick={() => openAddModal('governorate')}
+                        className="flex items-center gap-2 px-5 py-2.5 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-all shadow-md shadow-blue-100 font-arabic font-medium"
                     >
-                        <Plus size={18} />
-                        <span>إضافة محافظة جديدة</span>
+                        <Plus size={20} />
+                        <span>إضافة محافظة</span>
                     </button>
                 </div>
             </div>
 
+            {/* Grid layout */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 font-arabic" dir="rtl">
                 {/* Governorates Column */}
                 <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden flex flex-col min-h-[500px]">
@@ -131,18 +147,15 @@ export default function LocationsUI({ initialLocations }: LocationsUIProps) {
                                     {gov.nameAr}
                                 </button>
                                 <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                    <button onClick={(e) => { e.stopPropagation(); handleEdit(gov.id, gov.nameAr); }} className="p-1.5 text-gray-400 hover:text-blue-500">
+                                    <button onClick={() => openEditModal(gov)} className="p-1.5 text-gray-400 hover:text-blue-500">
                                         <Edit2 size={14} />
                                     </button>
-                                    <button onClick={(e) => { e.stopPropagation(); handleDelete(gov.id, gov.nameAr); }} className="p-1.5 text-gray-400 hover:text-red-500">
+                                    <button onClick={() => handleDelete(gov.id, gov.nameAr)} className="p-1.5 text-gray-400 hover:text-red-500">
                                         <Trash2 size={14} />
                                     </button>
                                 </div>
                             </div>
                         ))}
-                        {governorates.length === 0 && (
-                            <p className="text-center text-gray-400 py-20 text-sm">لا توجد بيانات</p>
-                        )}
                     </div>
                 </div>
 
@@ -155,17 +168,20 @@ export default function LocationsUI({ initialLocations }: LocationsUIProps) {
                         </h2>
                         {selectedGov && (
                             <button
-                                onClick={() => handleAdd('city', selectedGov)}
-                                className="p-1 hover:bg-orange-100 rounded text-orange-600"
+                                onClick={() => openAddModal('city', selectedGov)}
+                                className="p-1.5 hover:bg-orange-100 rounded-lg text-orange-600 transition-colors"
                             >
-                                <Plus size={16} />
+                                <Plus size={18} />
                             </button>
                         )}
                     </div>
                     <div className="flex-1 overflow-y-auto p-2 space-y-1">
                         {!selectedGov ? (
-                            <div className="h-full flex items-center justify-center text-gray-400 text-sm px-10 text-center">
-                                اختر محافظة لعرض المدن التابعة لها
+                            <div className="h-full flex flex-col items-center justify-center text-gray-400 text-sm px-10 text-center gap-3">
+                                <div className="p-3 bg-gray-50 rounded-full">
+                                    <Layers size={24} className="text-gray-300" />
+                                </div>
+                                اختر محافظة أولاً
                             </div>
                         ) : (
                             cities.map((city) => (
@@ -180,7 +196,7 @@ export default function LocationsUI({ initialLocations }: LocationsUIProps) {
                                         {city.nameAr}
                                     </button>
                                     <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                        <button onClick={() => handleEdit(city.id, city.nameAr)} className="p-1.5 text-gray-400 hover:text-blue-500">
+                                        <button onClick={() => openEditModal(city)} className="p-1.5 text-gray-400 hover:text-blue-500">
                                             <Edit2 size={14} />
                                         </button>
                                         <button onClick={() => handleDelete(city.id, city.nameAr)} className="p-1.5 text-gray-400 hover:text-red-500">
@@ -189,9 +205,6 @@ export default function LocationsUI({ initialLocations }: LocationsUIProps) {
                                     </div>
                                 </div>
                             ))
-                        )}
-                        {selectedGov && cities.length === 0 && (
-                            <p className="text-center text-gray-400 py-20 text-sm">لا توجد مدن مضافة</p>
                         )}
                     </div>
                 </div>
@@ -205,43 +218,74 @@ export default function LocationsUI({ initialLocations }: LocationsUIProps) {
                         </h2>
                         {selectedCity && (
                             <button
-                                onClick={() => handleAdd('area', selectedCity)}
-                                className="p-1 hover:bg-green-100 rounded text-green-600"
+                                onClick={() => openAddModal('area', selectedCity)}
+                                className="p-1.5 hover:bg-green-100 rounded-lg text-green-600 transition-colors"
                             >
-                                <Plus size={16} />
+                                <Plus size={18} />
                             </button>
                         )}
                     </div>
                     <div className="flex-1 overflow-y-auto p-2 space-y-1">
                         {!selectedCity ? (
-                            <div className="h-full flex items-center justify-center text-gray-400 text-sm px-10 text-center">
-                                اختر مدينة لعرض المناطق التابعة لها
+                            <div className="h-full flex flex-col items-center justify-center text-gray-400 text-sm px-10 text-center gap-3">
+                                <div className="p-3 bg-gray-50 rounded-full">
+                                    <MapPin size={24} className="text-gray-300" />
+                                </div>
+                                اختر مدينة أولاً
                             </div>
                         ) : (
                             areas.map((area) => (
                                 <div
                                     key={area.id}
-                                    className="w-full text-right px-4 py-3 rounded-xl hover:bg-gray-50 text-gray-600 flex items-center justify-between group"
+                                    className="group flex items-center justify-between px-2 rounded-xl transition-all hover:bg-gray-50 text-gray-600"
                                 >
-                                    <span className="font-medium">{area.nameAr}</span>
+                                    <span className="flex-1 text-right px-2 py-3 font-medium">
+                                        {area.nameAr}
+                                    </span>
                                     <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                        <button onClick={() => handleEdit(area.id, area.nameAr)} className="p-1.5 text-gray-400 hover:text-blue-500 transition-colors">
+                                        <button onClick={() => openEditModal(area)} className="p-1.5 text-gray-400 hover:text-blue-500">
                                             <Edit2 size={14} />
                                         </button>
-                                        <button onClick={() => handleDelete(area.id, area.nameAr)} className="p-1.5 text-gray-400 hover:text-red-500 transition-colors">
+                                        <button onClick={() => handleDelete(area.id, area.nameAr)} className="p-1.5 text-gray-400 hover:text-red-500">
                                             <Trash2 size={14} />
                                         </button>
                                     </div>
                                 </div>
                             ))
                         )}
-                        {selectedCity && areas.length === 0 && (
-                            <p className="text-center text-gray-400 py-20 text-sm">لا توجد مناطق مضافة</p>
-                        )}
                     </div>
                 </div>
             </div>
+
+            {/* Modal */}
+            <Modal
+                isOpen={isModalOpen}
+                onClose={() => setIsModalOpen(false)}
+                title={modalData.mode === 'add' ? 'إضافة موقع جديد' : 'تعديل بيانات الموقع'}
+            >
+                <div className="space-y-4">
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">الاسم بالعربية</label>
+                        <input
+                            type="text"
+                            value={modalData.nameAr}
+                            onChange={(e) => setModalData({ ...modalData, nameAr: e.target.value })}
+                            className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:ring-2 focus:ring-blue-500 outline-none transition-all"
+                            placeholder="مثلاً: صنعاء، حي حدة..."
+                            autoFocus
+                        />
+                    </div>
+                    
+                    <button
+                        onClick={handleSubmit}
+                        disabled={loading || !modalData.nameAr.trim()}
+                        className="w-full py-3 bg-blue-600 text-white rounded-xl font-medium hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 transition-all shadow-lg shadow-blue-100"
+                    >
+                        {loading && <Loader2 size={18} className="animate-spin" />}
+                        {modalData.mode === 'add' ? 'حفظ الموقع' : 'تعديل البيانات'}
+                    </button>
+                </div>
+            </Modal>
         </div>
     );
 }
-

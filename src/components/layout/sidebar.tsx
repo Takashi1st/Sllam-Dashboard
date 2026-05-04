@@ -10,6 +10,7 @@ import {
     MapPin,
     LogOut,
     ChevronLeft,
+    Settings
 } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import { useRouter } from 'next/navigation';
@@ -20,6 +21,7 @@ const menuItems = [
     { icon: Truck, label: 'إدارة السائقين', href: '/admin/drivers', exact: false },
     { icon: Users, label: 'إدارة المستخدمين', href: '/admin/users', exact: false },
     { icon: MapPin, label: 'إدارة المواقع', href: '/admin/locations', exact: false },
+    { icon: Settings, label: 'إعدادات النظام', href: '/admin/settings', exact: false },
 ];
 
 export function Sidebar() {
