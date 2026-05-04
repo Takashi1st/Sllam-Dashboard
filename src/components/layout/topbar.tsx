@@ -15,8 +15,8 @@ export function Topbar({ user }: TopbarProps) {
 
     const handleSignOut = async () => {
         await supabase.auth.signOut();
+        router.push('/admin/login');
         router.refresh();
-        router.push('/login');
     };
 
     return (
@@ -33,7 +33,7 @@ export function Topbar({ user }: TopbarProps) {
             <div className="flex items-center gap-6">
                 <button className="relative p-2 hover:bg-gray-50 rounded-full transition-colors text-gray-500">
                     <Bell size={20} />
-                    <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full border-2 border-white"></span>
+                    <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full border-2 border-white"></span>
                 </button>
 
                 <div className="flex items-center gap-4 border-r pr-6 border-gray-100">

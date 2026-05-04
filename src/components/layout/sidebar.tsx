@@ -8,19 +8,18 @@ import {
     Truck,
     Package,
     MapPin,
-    Settings,
-    LogOut
+    LogOut,
+    ChevronLeft,
 } from 'lucide-react';
-
 import { createClient } from '@/lib/supabase/client';
 import { useRouter } from 'next/navigation';
 
 const menuItems = [
-    { icon: LayoutDashboard, label: 'نظرة عامة', href: '/admin' },
-    { icon: Package, label: 'إدارة الطلبات', href: '/admin/orders' },
-    { icon: Truck, label: 'إدارة السائقين', href: '/admin/drivers' },
-    { icon: Users, label: 'إدارة المستخدمين', href: '/admin/users' },
-    { icon: MapPin, label: 'إدارة المواقع', href: '/admin/locations' },
+    { icon: LayoutDashboard, label: 'نظرة عامة', href: '/admin', exact: true },
+    { icon: Package, label: 'إدارة الطلبات', href: '/admin/orders', exact: false },
+    { icon: Truck, label: 'إدارة السائقين', href: '/admin/drivers', exact: false },
+    { icon: Users, label: 'إدارة المستخدمين', href: '/admin/users', exact: false },
+    { icon: MapPin, label: 'إدارة المواقع', href: '/admin/locations', exact: false },
 ];
 
 export function Sidebar() {
@@ -30,42 +29,66 @@ export function Sidebar() {
 
     const handleSignOut = async () => {
         await supabase.auth.signOut();
+        router.push('/admin/login');
         router.refresh();
-        router.push('/login');
     };
 
+    const isActive = (href: string, exact: boolean) =>
+        exact ? pathname === href : pathname.startsWith(href);
+
     return (
-        <aside className="w-64 bg-white border-r border-gray-200 h-screen flex flex-col sticky top-0 rtl">
-            <div className="p-6">
-                <h1 className="text-2xl font-bold text-blue-600">Sllam Admin</h1>
+        <aside className="w-64 bg-white border-l border-gray-100 h-screen flex flex-col sticky top-0 shadow-sm">
+            {/* Logo */}
+            <div className="p-6 border-b border-gray-50">
+                <div className="flex items-center gap-3">
+                    <div className="w-9 h-9 bg-gradient-to-br from-blue-500 to-blue-700 rounded-xl flex items-center justify-center shadow-md shadow-blue-200">
+                        <ChevronLeft size={18} className="text-white" />
+                    </div>
+                    <div>
+                        <h1 className="text-lg font-bold text-gray-900 leading-tight">سلّم</h1>
+                        <p className="text-[10px] text-gray-400 uppercase tracking-wider">Admin Panel</p>
+                    </div>
+                </div>
             </div>
 
-            <nav className="flex-1 px-4 space-y-2 font-tajawal">
+            {/* Navigation */}
+            <nav className="flex-1 px-3 py-4 space-y-1">
+                <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider px-3 mb-3">القائمة الرئيسية</p>
                 {menuItems.map((item) => {
-                    const isActive = pathname === item.href;
+                    const active = isActive(item.href, item.exact);
                     return (
                         <Link
                             key={item.href}
                             href={item.href}
-                            className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 ${isActive
-                                ? 'bg-blue-50 text-blue-600 font-semibold shadow-sm'
-                                : 'text-gray-500 hover:bg-gray-50 hover:text-gray-700'
-                                }`}
+                            className={`flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-150 group ${
+                                active
+                                    ? 'bg-blue-600 text-white shadow-md shadow-blue-200'
+                                    : 'text-gray-500 hover:bg-gray-50 hover:text-gray-800'
+                            }`}
                         >
-                            <item.icon size={20} />
-                            <span>{item.label}</span>
+                            <item.icon
+                                size={18}
+                                className={active ? 'text-white' : 'text-gray-400 group-hover:text-gray-600'}
+                            />
+                            <span className={`text-sm font-medium ${active ? 'text-white' : ''}`}>
+                                {item.label}
+                            </span>
+                            {active && (
+                                <span className="mr-auto w-1.5 h-1.5 bg-white/50 rounded-full" />
+                            )}
                         </Link>
                     );
                 })}
             </nav>
 
-            <div className="p-4 border-t border-gray-100">
+            {/* Sign Out */}
+            <div className="p-3 border-t border-gray-50">
                 <button
                     onClick={handleSignOut}
-                    className="flex items-center gap-3 px-4 py-3 w-full rounded-xl text-red-500 hover:bg-red-50 transition-colors duration-200 active:scale-95 transition-all"
+                    className="flex items-center gap-3 px-3 py-2.5 w-full rounded-xl text-gray-500 hover:bg-red-50 hover:text-red-600 transition-all duration-150 group"
                 >
-                    <LogOut size={20} />
-                    <span>تسجيل الخروج</span>
+                    <LogOut size={18} className="group-hover:text-red-500" />
+                    <span className="text-sm font-medium">تسجيل الخروج</span>
                 </button>
             </div>
         </aside>

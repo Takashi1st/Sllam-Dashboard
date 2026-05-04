@@ -4,9 +4,7 @@ import { useState, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import {
     MapPin,
-    Search,
     RefreshCw,
-    ChevronLeft,
     Plus,
     Edit2,
     Trash2,
@@ -23,7 +21,6 @@ import { addLocation, updateLocation, deleteLocation } from '@/app/actions/admin
 export default function LocationsUI({ initialLocations }: LocationsUIProps) {
     const [selectedGov, setSelectedGov] = useState<string | null>(null);
     const [selectedCity, setSelectedCity] = useState<string | null>(null);
-    const [searchTerm, setSearchTerm] = useState('');
     const [loading, setLoading] = useState(false);
     const router = useRouter();
 
